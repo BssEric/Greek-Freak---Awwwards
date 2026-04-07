@@ -1,0 +1,493 @@
+<html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giannis Antetokounmpo | The Greek Freak</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.29/bundled/lenis.min.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&amp;family=Oswald:wght@400;700&amp;display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bucks-green: #00471B;
+            --bucks-cream: #EEE1C6;
+            --black: #080808;
+            --off-black: #111111;
+            --white: #ffffff;
+            --cursor-size: 20px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--black);
+            color: var(--bucks-cream);
+            font-family: 'Montserrat', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* --- UI & TEXTURE --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 900;
+            opacity: 0.07;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
+        }
+
+        /* Barra de Progresso */
+        .progress-bar {
+            position: fixed; top: 0; left: 0; height: 4px; background: var(--bucks-green); width: 0%; z-index: 1001;
+        }
+
+        .cursor {
+            width: var(--cursor-size);
+            height: var(--cursor-size);
+            border: 1px solid var(--bucks-cream);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 999;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            mix-blend-mode: difference;
+            transition: width 0.3s, height 0.3s, background-color 0.3s;
+            display: none; /* Oculto por padrão (mobile) */
+        }
+
+        /* Ativar cursor customizado apenas em dispositivos com mouse */
+        @media (hover: hover) and (pointer: fine) {
+            .cursor { display: block; }
+            body { cursor: none; }
+            a, button, .shoe-card, .jersey-card, nav span { cursor: none; }
+        }
+
+        .cursor.active {
+            width: 50px; height: 50px;
+            background-color: var(--bucks-cream);
+            border-color: transparent;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1, h2, h3 { font-family: 'Oswald', sans-serif; text-transform: uppercase; line-height: 0.9; }
+        
+        /* --- HEADER --- */
+        header {
+            position: fixed; top: 0; width: 100%; padding: 30px 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; mix-blend-mode: difference;
+        }
+        .logo { font-size: 24px; font-weight: 700; letter-spacing: -1px; }
+        nav ul { display: flex; gap: 40px; list-style: none; }
+        nav span { 
+            color: var(--bucks-cream); text-decoration: none; 
+            font-weight: 600; font-size: 12px; letter-spacing: 2px; 
+            text-transform: uppercase; position: relative;
+            cursor: pointer;
+        }
+        nav span::after {
+            content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 1px;
+            background: var(--bucks-cream); transition: width 0.3s ease;
+        }
+        nav span:hover::after { width: 100%; }
+
+        /* --- HERO --- */
+        .hero {
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .hero-bg-text {
+            position: absolute; font-size: 18vw; font-weight: 700; opacity: 0.03;
+            white-space: nowrap; pointer-events: none; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .hero-content { z-index: 2; text-align: center; mix-blend-mode: difference; }
+        .hero-title { font-size: 12vw; font-weight: 700; letter-spacing: -5px; }
+        .hero-subtitle { font-size: 1.2rem; letter-spacing: 10px; color: var(--bucks-green); display: block; margin-bottom: 20px;}
+
+        /* Hero Reveal Image */
+        .hero-reveal-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('Assets/203507-removebg-preview.png'); /* Foto Giannis Action */
+            background-size: 50%; background-position: center; background-repeat: no-repeat;
+            opacity: 1; z-index: 1;
+            clip-path: circle(0% at 50% 50%); /* Começa oculto */
+            pointer-events: none;
+            transition: clip-path 0.4s ease, filter 0.2s; /* Add transition for filter */
+        }
+
+        /* Silhouette (Outline/Shadow) */
+        .hero-silhouette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('Assets/203507-removebg-preview.png');
+            background-size: 50%; background-position: center; background-repeat: no-repeat;
+            opacity: 0.4; z-index: 0;
+            filter: brightness(0) drop-shadow(0 0 1px rgba(238, 225, 198, 0.5)); /* Black fill + Cream outline */
+            pointer-events: none;
+        }
+
+        /* Grid Decorativo */
+        .grid-lines { position: absolute; inset: 0; pointer-events: none; }
+        .line { position: absolute; background: rgba(238, 225, 198, 0.08); }
+        .line-v { width: 1px; height: 100%; left: 25%; }
+        .line-v:nth-child(2) { left: 75%; }
+        .line-h { height: 1px; width: 100%; top: 50%; }
+
+        /* --- STATS --- */
+        .stats-section { padding: 150px 10%; position: relative; }
+        .stat-row { display: flex; justify-content: space-between; border-top: 1px solid rgba(238, 225, 198, 0.2); padding-top: 20px; }
+        .stat-item { text-align: left; }
+        .stat-number { font-size: 6vw; display: block; font-family: 'Oswald'; color: var(--white); }
+        .stat-label { font-size: 0.9rem; letter-spacing: 3px; opacity: 0.6; }
+
+        /* --- PARALLAX IMAGE --- */
+        .parallax-wrapper {
+            height: 100vh; width: 100%; overflow: hidden; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .parallax-img {
+            width: 100%; height: 180%; object-fit: cover; position: absolute; top: -10%;
+            /* FOTO DO GIANNIS (Substituir URL) */
+            background-image: url('Assets/898ab8238f9c2db58eedf0b86ffed37f.jpg');
+            background-size: cover; background-position: center; filter: grayscale(100%) contrast(1.2);
+        }
+        .parallax-overlay-text {
+            font-size: 15vw; position: relative; z-index: 2; color: transparent;
+            -webkit-text-stroke: 2px var(--white); mix-blend-mode: overlay;
+            pointer-events: none;
+        }
+
+        /* --- GEAR / SNEAKER SCROLL --- */
+        .gear-section { padding: 100px 0; background: var(--off-black); overflow: hidden; }
+        .gear-header { padding: 0 50px 50px; font-size: 3rem; color: var(--bucks-green); }
+        
+        .gallery-wrapper {
+            display: flex; width: max-content; /* Ajuste dinâmico para scroll horizontal */
+        }
+        .shoe-card {
+            width: 30vw; height: 60vh; border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            position: relative; transition: background 0.3s;
+        }
+        .shoe-card:hover { background: #1a1a1a; }
+        
+        /* Imagem do Tênis (Placeholder) */
+        .shoe-img {
+            width: 80%; height: auto; transform: rotate(-15deg);
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));
+            transition: transform 0.5s ease;
+        }
+        .shoe-card:hover .shoe-img { transform: rotate(0deg) scale(1.1); }
+        
+        .shoe-name {
+            position: absolute; bottom: 40px; left: 40px;
+            font-family: 'Oswald'; font-size: 2rem;
+            -webkit-text-stroke: 1px var(--bucks-cream); color: transparent;
+        }
+
+        /* --- JERSEY GALLERY --- */
+        .jersey-section { padding: 50px 25%; background: var(--black); }
+        .jersey-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
+        }
+        .jersey-card {
+            position: relative; aspect-ratio: 3/4; cursor: pointer; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .j-img {
+            width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .jersey-front { z-index: 2; object-fit: cover; padding: 0; background: #111; }
+        .jersey-back { z-index: 1; opacity: 0; }
+        
+        /* Estado Ativo (Hover) */
+        .jersey-card:hover .jersey-front { opacity: 0; transform: scale(0.9); }
+        .jersey-card:hover .jersey-back { opacity: 1; transform: scale(1.1); }
+        
+        .jersey-label { position: absolute; bottom: 20px; left: 20px; z-index: 3; font-family: 'Oswald'; font-size: 1.5rem; pointer-events: none; mix-blend-mode: difference;}
+
+        /* --- FOOTER --- */
+        footer {
+            height: 50vh; display: flex; align-items: center; justify-content: center;
+            background: var(--bucks-green); color: var(--black); flex-direction: column;
+        }
+        .footer-big { font-size: 10vw; font-family: 'Oswald'; line-height: 0.8; }
+        .footer-small { margin-top: 20px; font-weight: 600; letter-spacing: 2px; }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .shoe-card { width: 85vw; }
+            .hero-title { font-size: 18vw; }
+            .stat-number { font-size: 12vw; }
+            .jersey-section { padding: 50px 5%; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="progress-bar"></div>
+    <div class="cursor"></div>
+    <div class="noise-overlay"></div>
+
+    <header>
+        <div class="logo">GA<span style="color:var(--bucks-green)">34</span></div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="grid-lines">
+                <div class="line line-v"></div>
+                <div class="line line-v"></div>
+                <div class="line line-h"></div>
+            </div>
+            <div class="hero-silhouette"></div>
+            <div class="hero-reveal-img"></div>
+
+            <div class="hero-bg-text">GREEK FREAK</div>
+            
+            <div class="hero-content">
+                <span class="hero-subtitle">MILWAUKEE BUCKS</span>
+                <h1 class="hero-title">GIANNIS</h1>
+            </div>
+        </section>
+
+        <section class="stats-section" id="stats">
+            <div class="stat-row">
+                <div class="stat-item">
+                    <span class="stat-number">2x</span>
+                    <span class="stat-label">MVP League</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1x</span>
+                    <span class="stat-label">Finals MVP</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">21'</span>
+                    <span class="stat-label">Champion</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="parallax-wrapper">
+            <div class="parallax-img" data-speed="0.5"></div>
+            <h2 class="parallax-overlay-text">DOMINANCE</h2>
+        </section>
+
+        <section class="jersey-section">
+            <h2 class="gear-header">JERSEY MODE</h2>
+            <div class="jersey-grid">
+                <div class="jersey-card">
+                    <img src="https://d2j6dbq0eux0bg.cloudfront.net/images/104470295/4346300290.jpg" class="j-img jersey-front" alt="Jersey White">
+                    <img src="https://athlonsports.com/.image/t_share/MjE0ODcxNzczOTc0Mzc0MTgw/giannis-antetokounmpo.jpg" class="j-img jersey-back" alt="Giannis Dunk">
+                    <div class="jersey-label">ASSOCIATION ED.</div>
+                </div>
+                <div class="jersey-card">
+                    <img src="https://static.nike.com/a/images/t_PDP_1280_v1/f_auto,q_auto:eco/3f8a5be1-1c27-4c53-8a34-4d5a5684022e/giannis-antetokounmpo-bucks-icon-edition-2020-samarreta-nba-authentic-GQL3KL.png" class="j-img jersey-front" alt="Jersey Green">
+                    <img src="https://e0.365dm.com/23/10/2048x1152/skysports-giannis-milwaukee-bucks_6333760.jpg?20231024125040" class="j-img jersey-back" alt="Giannis Play">
+                    <div class="jersey-label">ICON EDITION</div>
+                </div>
+                <div class="jersey-card">
+                    <img src="https://cdn.shopify.com/s/files/1/2400/0999/products/142517-142522-ProShop_StatementEdition_MotoPatch_Giannis_1000x1000.progressive.jpg?v=1675108195" class="j-img jersey-front" alt="Jersey Black">
+                    <img src="https://www.rappler.com/tachyon/2022/12/reuters-giannis-antetokounmpo-december-14-2022.jpg" class="j-img jersey-back" alt="Giannis Defense">
+                    <div class="jersey-label">STATEMENT ED.</div>
+                </div>
+                <div class="jersey-card">
+                    <img src="https://fanatics.frgimages.com/milwaukee-bucks/mens-fanatics-giannis-antetokounmpo-cream-milwaukee-bucks-2025/26-city-edition-fast-break-jersey_ss5_p-203056644+pv-2+u-jtri1wwnn2thjcigh4h8+v-ow6zv6fl6a5xfkklog4s.jpg?_hv=2&w=1018" class="j-img jersey-front" style="padding: 15px; background: var(--white);" alt="Jersey Cream City">
+                    <img src="https://chumley.barstoolsports.com/union/getty/2023/09/28/GettyImages-1191149957.97ac3533.webp" class="j-img jersey-back" alt="Giannis Dunking">
+                    <div class="jersey-label">CITY EDITION</div>
+                </div>
+                <div class="jersey-card">
+                    <img src="https://www.basketballshop24.de/media/c4/24/ce/1682473384/53232827d7a53d0571a219804e26c020.jpeg" class="j-img jersey-front" alt="Jersey Purple">
+                    <img src="https://th.bing.com/th/id/OIP.8QeX0ntQAjr4uzWavONH1QHaE8?w=201&h=134&c=7&r=0&o=7&dpr=3&pid=1.7&rm=3" class="j-img jersey-back" alt="Giannis Classic">
+                    <div class="jersey-label">CLASSIC EDITION</div>
+                </div>
+                <div class="jersey-card">
+                    <img src="https://static.nike.com/a/images/c_limit,w_318,f_auto/t_product_v1/968023b9-ba52-4c89-8c98-2575b292a022/all-star-edition-giannis-antetokounmpo-bucks-jordan-dri-fit-nba-swingman-jersey-sbTr9B.png" class="j-img jersey-front" style="padding: 40px; background: var(--white);" alt="Jersey All Star">
+                    <img src="https://www.fanduel.com/research/theduel/images/duel/01gs8vgsydz48y7xrgx5.jpg" class="j-img jersey-back" alt="Giannis All Star">
+                    <div class="jersey-label">ALL-STAR</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="gear-section" id="gear">
+            <h2 class="gear-header">ZOOM FREAK LINE</h2>
+            <div class="gallery-wrapper">
+                <div class="shoe-card">
+                    <img src="https://www.nike.ae/dw/image/v2/BDVB_PRD/on/demandware.static/-/Sites-akeneo-master-catalog/default/dw06547a3f/nk/96d/7/b/6/3/5/96d7b635_7777_4d68_a94b_086a53182c43.png?sw=2000&sh=2000&sm=fit" class="shoe-img" alt="Freak 5">
+                    <div class="shoe-name">FREAK 5 <br> OREO</div>
+                </div>
+                <div class="shoe-card">
+                    <img src="Assets/R.f20c078c0d95fe3c529d1ce4d8e977-removebg-preview.png" class="shoe-img" alt="Freak 4">
+                    <div class="shoe-name">FREAK 4 <br> GREEK</div>
+                </div>
+                <div class="shoe-card">
+                    <img src="Assets/075085P1A1-removebg-preview.png" class="shoe-img" style="" alt="Freak Custom">
+                    <div class="shoe-name">FREAK 5 <br> PINK</div>
+                </div>
+                <div class="shoe-card">
+                    <h3 style="font-size: 2rem; font-family: 'Oswald';">VIEW ALL COLLECTION -&gt;</h3>
+                </div>
+            </div>
+        </section>
+
+        <section style="padding: 100px 50px; background: #000;">
+            <p style="font-size: 2rem; max-width: 800px; margin-bottom: 50px;">
+                "I never wanted to be just a basketball player. I wanted to be great."
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-big">GA34</div>
+        <div class="footer-small">DESIGN CONCEPT BY GEMINI</div>
+    </footer>
+
+    <script>
+        // 1. SETUP DO LENIS (Rolagem Suave)
+        const lenis = new Lenis({
+            duration: 1.2,
+            easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+            direction: 'vertical',
+            smooth: true
+        });
+
+        function raf(time) {
+            lenis.raf(time);
+            requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+
+        // Conectar ScrollTrigger ao Lenis
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // 2. CURSOR CUSTOMIZADO
+        const cursor = document.querySelector('.cursor');
+
+        // Barra de Progresso
+        gsap.to(".progress-bar", {
+            width: "100%",
+            ease: "none",
+            scrollTrigger: { scrub: 0.3 }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.1
+            });
+        });
+
+        document.querySelectorAll('a, .shoe-card, .jersey-card, nav span').forEach(el => {
+            el.addEventListener('mouseenter', () => cursor.classList.add('active'));
+            el.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+        });
+
+        // 3. ANIMAÇÕES GSAP
+
+        // Hero Reveal Effect (Eraser/Spotlight)
+        const heroSection = document.querySelector('.hero');
+        const revealImg = document.querySelector('.hero-reveal-img');
+
+        let mouseX = 0;
+        let mouseY = 0;
+
+        heroSection.addEventListener('mousemove', (e) => {
+            const rect = heroSection.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Calculate mouse speed
+            const speedX = Math.abs(x - mouseX);
+            const speedY = Math.abs(y - mouseY);
+            const speed = Math.sqrt(speedX * speedX + speedY * speedY);
+
+            mouseX = x;
+            mouseY = y;
+
+            const maxDistortion = Math.min(speed / 50, 5); // Adjust divisor to control distortion amount
+
+            
+            gsap.to(revealImg, {
+                clipPath: `circle(150px at ${x}px ${y}px)`,
+                filter: `blur(${maxDistortion}px)`, // Apply blur based on speed
+                duration: 0.4,
+                ease: "power2.out"
+            });
+
+        });
+        
+        heroSection.addEventListener('mouseleave', () => {
+            gsap.to(revealImg, {
+                clipPath: `circle(0px at 50% 50%)`,
+                duration: 0.5
+            });
+            gsap.to(revealImg, { filter: `blur(0px)`, duration: 0.3 }); // Reset blur
+        });
+
+        // Hero Reveal
+        const tl = gsap.timeline();
+        tl.from(".hero-title", { y: 200, opacity: 0, duration: 1.5, ease: "power4.out", skewY: 5 })
+          .from(".hero-subtitle", { y: 20, opacity: 0, duration: 1 }, "-=1")
+          .from(".line", { scaleY: 0, opacity: 0, duration: 1.5, stagger: 0.2, ease: "expo.out" }, "-=1.5");
+
+        // Parallax do Texto de Fundo (Move lateralmente ao rolar)
+        gsap.to(".hero-bg-text", {
+            scrollTrigger: {
+                trigger: ".hero",
+                start: "top top",
+                end: "bottom top",
+                scrub: 1
+            },
+            x: 100,
+            opacity: 0
+        });
+
+        // Parallax da Imagem Grande
+        gsap.to(".parallax-img", {
+            scrollTrigger: {
+                trigger: ".parallax-wrapper",
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true
+            },
+            y: 100 // Move a imagem suavemente
+        });
+
+        // Scroll Horizontal da Galeria de Tênis
+        const gallery = document.querySelector('.gallery-wrapper');
+        
+        gsap.to(gallery, {
+            x: () => -(gallery.scrollWidth - window.innerWidth),
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".gear-section",
+                pin: true,
+                scrub: 1,
+                end: () => "+=" + (gallery.scrollWidth - window.innerWidth),
+                invalidateOnRefresh: true
+            }
+        });
+
+        // Efeito de cor ao chegar no footer
+        gsap.to("body", {
+            scrollTrigger: {
+                trigger: "footer",
+                start: "top 80%",
+                toggleActions: "play none none reverse"
+            },
+            backgroundColor: "#00471B",
+            color: "#000",
+            duration: 0.5
+        });
+
+    </script>
+
+
+</body></html>
